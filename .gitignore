@@ -14,3 +14,4 @@ test-results/
 .DS_Store
 
 .ruff_cache/
+.vscode/

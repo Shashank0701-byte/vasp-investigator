@@ -1,0 +1,86 @@
+{
+  "target": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "chain": "ethereum",
+  "mode": "import",
+  "title": "Case 02 — Mixed VASP candidates",
+  "max_hops": 4,
+  "transactions": [
+    {
+      "tx_hash": "0x2000000000000000000000000000000000000000000000000000000000000001",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18100001,
+      "transaction_index": 1,
+      "timestamp": "2026-09-05T09:00:00+00:00",
+      "from_address": "0xf1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+      "to_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "asset": "ETH",
+      "amount": "20.0",
+      "usd_value": "50000.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 02",
+      "source_confidence": 0.95
+    },
+    {
+      "tx_hash": "0x2000000000000000000000000000000000000000000000000000000000000002",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18100010,
+      "transaction_index": 2,
+      "timestamp": "2026-09-05T09:20:00+00:00",
+      "from_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "to_address": "0x503828976d22510aad0201ac7ec88293211d23da",
+      "asset": "ETH",
+      "amount": "10.0",
+      "usd_value": "25000.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 02",
+      "source_confidence": 0.95
+    },
+    {
+      "tx_hash": "0x2000000000000000000000000000000000000000000000000000000000000003",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18100020,
+      "transaction_index": 3,
+      "timestamp": "2026-09-05T09:40:00+00:00",
+      "from_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "to_address": "0x2910543af39aba0cd09dbb2d50200b3e800a63d2",
+      "asset": "ETH",
+      "amount": "9.0",
+      "usd_value": "22500.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 02",
+      "source_confidence": 0.95
+    }
+  ],
+  "labels": [
+    {
+      "address": "0x503828976d22510aad0201ac7ec88293211d23da",
+      "chain": "ethereum",
+      "entity": "Coinbase",
+      "entity_type": "vasp",
+      "confidence": 0.95,
+      "strength": "strong",
+      "source": "Etherscan label: Coinbase 2",
+      "source_reliability": 0.95,
+      "observed_at": "2026-09-29T00:00:00+00:00",
+      "synthetic": false
+    },
+    {
+      "address": "0x2910543af39aba0cd09dbb2d50200b3e800a63d2",
+      "chain": "ethereum",
+      "entity": "Kraken",
+      "entity_type": "vasp",
+      "confidence": 0.90,
+      "strength": "strong",
+      "source": "Etherscan label: Kraken.com 2",
+      "source_reliability": 0.90,
+      "observed_at": "2026-09-29T00:00:00+00:00",
+      "synthetic": false
+    }
+  ]
+}

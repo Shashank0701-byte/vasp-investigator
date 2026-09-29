@@ -1,0 +1,4 @@
+[
+  {"address": "0x098b716b8aaf21512996dc57eb0615e2383e2f96", "entity": "Ronin Bridge Hack", "entity_type": "sanctioned", "chain": "ethereum", "confidence": 1.0, "strength": "strong", "source": "OFAC SDN: Lazarus Group associated address", "source_url": "https://ofac.treasury.gov", "source_reliability": 1.0, "observed_at": "2026-09-29T00:00:00+00:00", "synthetic": false},
+  {"address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f001", "entity": "Known Phishing", "entity_type": "scam", "chain": "ethereum", "confidence": 0.85, "strength": "probable", "source": "Community phishing report database", "source_url": "https://etherscan.io", "source_reliability": 0.75, "observed_at": "2026-09-29T00:00:00+00:00", "synthetic": false}
+]

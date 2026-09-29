@@ -1,0 +1,57 @@
+{
+  "target": "0x4444444444444444444444444444444444444444",
+  "chain": "ethereum",
+  "mode": "import",
+  "title": "Case 04 — DEX service boundary",
+  "max_hops": 4,
+  "transactions": [
+    {
+      "tx_hash": "0x4000000000000000000000000000000000000000000000000000000000000001",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18300001,
+      "transaction_index": 1,
+      "timestamp": "2026-09-15T12:00:00+00:00",
+      "from_address": "0x5555555555555555555555555555555555555555",
+      "to_address": "0x4444444444444444444444444444444444444444",
+      "asset": "ETH",
+      "amount": "8.0",
+      "usd_value": "20000.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 04",
+      "source_confidence": 0.95
+    },
+    {
+      "tx_hash": "0x4000000000000000000000000000000000000000000000000000000000000002",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18300010,
+      "transaction_index": 2,
+      "timestamp": "2026-09-15T12:20:00+00:00",
+      "from_address": "0x4444444444444444444444444444444444444444",
+      "to_address": "0x7a250d5630b4cf539739df2c5dacb4c659f2488d",
+      "asset": "ETH",
+      "amount": "7.5",
+      "usd_value": "18750.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 04",
+      "source_confidence": 0.95
+    }
+  ],
+  "labels": [
+    {
+      "address": "0x7a250d5630b4cf539739df2c5dacb4c659f2488d",
+      "chain": "ethereum",
+      "entity": "Uniswap V2 Router",
+      "entity_type": "dex",
+      "confidence": 1.0,
+      "strength": "strong",
+      "source": "Etherscan label: Uniswap V2: Router 2",
+      "source_reliability": 1.0,
+      "observed_at": "2026-09-29T00:00:00+00:00",
+      "synthetic": false
+    }
+  ]
+}

@@ -140,6 +140,28 @@ export default function Dashboard() {
       setBusy(false);
     }
   }
+  async function investigateLive() {
+    setBusy(true);
+    setError("");
+    try {
+      const c = await api<Case>("/api/investigate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: wallet,
+          chain,
+          max_hops: 4,
+          title: `Live investigation — ${wallet.slice(0, 10)}`,
+        }),
+      });
+      activate(c);
+      setCases(await api<CaseSummary[]>("/api/cases"));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function importFile(file?: File) {
     if (!file) return;
     try {
@@ -434,7 +456,11 @@ export default function Dashboard() {
             className="search-bar"
             onSubmit={(e) => {
               e.preventDefault();
-              void investigate();
+              if (wallet === DEMO) {
+                void investigate();
+              } else {
+                void investigateLive();
+              }
             }}
           >
             <Search size={20} />
@@ -454,26 +480,25 @@ export default function Dashboard() {
               <option value="ethereum">Ethereum</option>
               <option value="bnb">BNB Chain</option>
             </select>
-            <button className="button primary" disabled={busy}>
-              {busy ? (
-                <LoaderCircle className="spin" size={17} />
-              ) : (
-                <GitBranch size={17} />
-              )}{" "}
-              {busy ? "Analyzing…" : "Run demo"}
+            <button className="button primary" disabled={busy} onClick={(e) => {
+              e.preventDefault();
+              if (wallet === DEMO) {
+                void investigate();
+              } else {
+                void investigateLive();
+              }
+            }}>
+              {busy ? <LoaderCircle className="spin" size={17} /> : <GitBranch size={17} />}{" "}
+              {busy ? "Analyzing…" : wallet === DEMO ? "Run demo" : "Investigate live"}
             </button>
           </form>
           <div className="demo-notice">
             <span className="badge amber">SYNTHETIC DEMO</span>
             <span>
-              Run the supplied wallet scenario, or{" "}
-              <button
-                onClick={() => importRef.current?.click()}
-                disabled={busy}
-              >
+              The demo address runs a synthetic scenario. Enter any other EVM address to run a live investigation via GoldRush, or{" "}
+              <button onClick={() => importRef.current?.click()} disabled={busy}>
                 import normalized evidence
-              </button>{" "}
-              for another address. Live API ingestion is not connected.
+              </button>.
             </span>
           </div>
           <input

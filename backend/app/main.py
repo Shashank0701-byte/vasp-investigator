@@ -4,11 +4,18 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from uuid import uuid4
 
+from dotenv import load_dotenv
+
+load_dotenv()  # loads backend/.env
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
+from pydantic import Field, field_validator
 
 from .engine import TraceBudgetExceeded, analyze
-from .models import InvestigationRequest
+from .goldrush import GoldRushProvider
+from .label_loader import load_labels
+from .models import Chain, InvestigationRequest, StrictModel
 from .providers import DEMO_TARGET, SyntheticProvider
 from .report import report
 from .storage import CaseStore
@@ -102,3 +109,59 @@ def get_evidence(case_id: str):
         "evidence": case["evidence"],
         "analysis": case["analysis"],
     }
+
+
+class InvestigateRequest(StrictModel):
+    target: str = Field(pattern=r"^0x[a-fA-F0-9]{40}$")
+    chain: Chain = Chain.ethereum
+    max_hops: int = Field(default=4, ge=1, le=6)
+    title: str = Field(default="Live investigation", min_length=1, max_length=100)
+
+    @field_validator("target")
+    @classmethod
+    def lowercase(cls, v):
+        return v.lower()
+
+
+@app.post("/api/investigate", status_code=201)
+def investigate(request: InvestigateRequest):
+    try:
+        provider = GoldRushProvider()
+        txs, _ = provider.fetch(request.target, request.chain)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    except Exception as exc:
+        raise HTTPException(503, f"Blockchain data unavailable: {exc}")
+
+    labels = load_labels(request.chain)
+    # Build an InvestigationRequest to reuse the existing analysis pipeline
+    inv_request = InvestigationRequest(
+        target=request.target,
+        chain=request.chain,
+        mode="import",
+        max_hops=request.max_hops,
+        title=request.title,
+        transactions=txs,
+        labels=labels,
+    )
+    evidence = {
+        "transactions": [t.model_dump(mode="json") for t in txs],
+        "labels": [label.model_dump(mode="json") for label in labels],
+    }
+    digest = sha256(
+        json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    try:
+        analysis = analyze(inv_request, txs, labels)
+    except TraceBudgetExceeded as exc:
+        raise HTTPException(422, str(exc))
+    case = {
+        "id": "CASE-" + uuid4().hex[:12].upper(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "title": request.title,
+        "evidence_digest": digest,
+        "evidence": evidence,
+        "analysis": analysis,
+    }
+    app.state.store.save(case)
+    return case

@@ -1,0 +1,44 @@
+{
+  "target": "0x6666666666666666666666666666666666666666",
+  "chain": "ethereum",
+  "mode": "import",
+  "title": "Case 05 — No verified VASP destination",
+  "max_hops": 4,
+  "transactions": [
+    {
+      "tx_hash": "0x5000000000000000000000000000000000000000000000000000000000000001",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18400001,
+      "transaction_index": 1,
+      "timestamp": "2026-09-20T14:00:00+00:00",
+      "from_address": "0x7777777777777777777777777777777777777777",
+      "to_address": "0x6666666666666666666666666666666666666666",
+      "asset": "ETH",
+      "amount": "3.0",
+      "usd_value": "7500.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 05",
+      "source_confidence": 0.95
+    },
+    {
+      "tx_hash": "0x5000000000000000000000000000000000000000000000000000000000000002",
+      "event_index": 0,
+      "chain": "ethereum",
+      "block_number": 18400010,
+      "transaction_index": 2,
+      "timestamp": "2026-09-20T14:30:00+00:00",
+      "from_address": "0x6666666666666666666666666666666666666666",
+      "to_address": "0x8888888888888888888888888888888888888888",
+      "asset": "ETH",
+      "amount": "2.5",
+      "usd_value": "6250.00",
+      "contract_address": null,
+      "transaction_type": "native",
+      "source": "Case fixture 05",
+      "source_confidence": 0.95
+    }
+  ],
+  "labels": []
+}

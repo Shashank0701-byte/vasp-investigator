@@ -11,26 +11,70 @@ Requires Node.js 20.9+ and Python 3.9+ (3.12 recommended).
 ./scripts/dev.sh
 ```
 
-Open http://127.0.0.1:3000. Choose **Explore demo investigation**. API documentation: http://127.0.0.1:8000/docs.
+Open http://127.0.0.1:3000. API documentation: http://127.0.0.1:8000/docs.
 
-The synthetic Ethereum / BNB scenario needs no API keys. It is restricted to the supplied demo address. Changing to an arbitrary address does not fabricate results. For other addresses use **Import evidence**, following [the import guide](docs/IMPORT.md).
+### Live investigation
 
-## Implemented
+Enter any Ethereum or BNB Chain wallet address and click **Investigate live**. The backend fetches real transaction history from GoldRush (Covalent), applies the curated VASP/risk label dataset, and runs the trace engine.
 
-- Next.js / TypeScript dashboard with six investigation views.
-- React Flow graph: zoom/pan, node/edge evidence, depth/value/date/entity filters, risk highlights, candidate-path highlighting and expansion of already-loaded neighbors.
-- FastAPI/Pydantic normalized evidence contracts with chain isolation, decimal amounts, contract-based token identity, duplicate-event rejection and timezone validation.
-- Chronological, same-asset proportional tracing, hop limits, cycle boundaries and conservative service endpoint stops.
-- Transparent weighted attribution scores with label/source-quality caps, conservative edge-disjoint support, exposure and hop evidence.
-- Rule-based risk signals, valuation coverage, observed velocity, HHI and entropy.
-- Saved cases, source evidence digest, downloadable Markdown reports and JSON evidence.
-- SQLite for easy local use; PostgreSQL through `DATABASE_URL` and Docker Compose.
+Requires a GoldRush API key. Create a free account at https://goldrush.dev, then add the key to `backend/.env`:
+
+```env
+GOLDRUSH_API_KEY=your_key_here
+```
+
+### Synthetic demo
+
+The demo address runs a fully deterministic synthetic scenario with no API key required. Click **Explore demo investigation** on the welcome screen or enter the demo address:
+
+```
+0x71a000000000000000000000000000000000092f
+```
+
+### Import evidence
+
+Use the sidebar's **Import evidence** button to load a pre-built investigation package. Five ready-to-use fixtures are included in `backend/data/test_cases/`. See [the import guide](docs/IMPORT.md) for the full JSON schema.
+
+## What's implemented
+
+### Blockchain ingestion
+- GoldRush (Covalent) provider: paginated native + ERC-20/BEP-20 transfers for Ethereum and BNB Chain, with retry/backoff and failed-transaction filtering.
+- Normalized evidence contracts (chain, block ordering, contract-based token identity, duplicate-event rejection, timezone validation).
+
+### VASP / risk label dataset
+- 18 verified Ethereum VASP addresses: Binance, Coinbase, Kraken, OKX, Bybit, KuCoin — sourced from Etherscan labels.
+- 5 BNB Chain VASP addresses sourced from BscScan labels.
+- 5 Tornado Cash pool addresses (OFAC SDN-listed).
+- Polygon, Optimism, Avalanche bridges.
+- Uniswap V2/V3, SushiSwap DEX routers.
+- Sanctioned and scam addresses.
+- Every label carries source, source URL, confidence, source reliability, and verification date.
+
+### Trace engine
+- Chronological, same-asset proportional tracing, hop limits, cycle boundaries, and conservative service endpoint stops.
+- Transparent six-component weighted attribution scores (proximity, interaction, independent paths, recency, label quality, cluster support) with evidence quality cap.
+- Rule-based risk signals: mixer, bridge, sanctions, scam, rapid layering, large-value transfer.
+- Valuation coverage, velocity, HHI and entropy metrics.
+
+### Dashboard (six views)
+- Overview: fund-flow graph, ranked VASP candidates, explainable evidence breakdown, risk signals, movement timeline.
+- Transaction graph: React Flow with zoom/pan, hop depth / min value / date / entity-type filters, risk highlights, candidate-path highlighting.
+- VASP attribution: component-level score breakdown with label provenance.
+- Risk & typology: evidence-linked risk factors and fund-flow statistics.
+- Transactions: searchable evidence table with per-transaction drawer.
+- Report: rendered Markdown report with SHA-256 evidence digest; downloadable.
+
+### Persistence and export
+- SQLite (default) or PostgreSQL via `DATABASE_URL`.
+- Saved cases with title, chain, mode, target, and creation time.
+- Downloadable Markdown investigation report and JSON evidence bundle.
+- SHA-256 evidence digest for content comparison.
 
 ## Verify
 
 ```sh
 cd backend
-.venv/bin/python -m pytest -q
+python -m pytest -q
 cd ../frontend
 npm run build
 npm run typecheck
@@ -39,23 +83,42 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests cover demo analysis, candidate selection, graph filtering, evidence selection, report download, imported no-evidence cases, persistence, and a mobile viewport. GitHub Actions runs the backend checks and frontend production build. CI is provided but has not run on GitHub yet.
+Backend tests (24): engine correctness (conservation, ordering, contracts, dilution, boundaries, hop limits, label quality, cycles, complexity budget) and full API lifecycle. Frontend build and type-check run in CI. Browser tests cover demo analysis, candidate selection, graph filtering, evidence inspection, report download, imported no-evidence cases, persistence, and mobile viewport.
 
-## Structure
+## Project structure
 
 ```text
-backend/app/models.py       Validated evidence schema
-backend/app/providers.py    Provider interface and synthetic scenario
-backend/app/engine.py       Tracing, attribution, risk and quantitative metrics
-backend/app/storage.py      SQLAlchemy case persistence
-backend/app/report.py       Deterministic evidence report
-backend/app/main.py         HTTP API
-frontend/app/               Dashboard and styles
-frontend/components/        Interactive graph
-frontend/tests/             Browser workflow tests
+backend/app/models.py        Validated evidence schema (Transaction, Label, InvestigationRequest)
+backend/app/providers.py     Provider interface and synthetic demo scenario
+backend/app/goldrush.py      GoldRush (Covalent) blockchain history provider
+backend/app/label_loader.py  Curated label dataset loader
+backend/app/engine.py        Tracing, attribution, risk and quantitative metrics
+backend/app/storage.py       SQLAlchemy case persistence
+backend/app/report.py        Deterministic Markdown report
+backend/app/main.py          HTTP API (FastAPI)
+backend/data/labels/         Curated VASP, mixer, bridge, DEX, sanctions labels
+backend/data/test_cases/     Five deterministic importable investigation fixtures
+frontend/app/                Dashboard and global styles
+frontend/components/         Interactive React Flow graph
+frontend/lib/types.ts        Shared TypeScript types
+frontend/tests/              Playwright browser workflow tests
+docs/METHODOLOGY.md          Tracing model, attribution formula, risk model, limitations
+docs/IMPORT.md               API reference and JSON evidence format
+docs/ROADMAP.md              Next implementation milestones
 ```
 
-See [methodology](docs/METHODOLOGY.md), [API/import format](docs/IMPORT.md), and [next milestones](docs/ROADMAP.md).
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Service health and ingestion capability |
+| `GET` | `/api/demo` | Demo target address and supported chains |
+| `POST` | `/api/investigate` | Live investigation via GoldRush + curated labels |
+| `POST` | `/api/cases` | Analyze and persist (demo or import mode) |
+| `GET` | `/api/cases` | Latest 100 case summaries |
+| `GET` | `/api/cases/{id}` | Full stored case with analysis and evidence |
+| `GET` | `/api/cases/{id}/report` | Markdown report attachment |
+| `GET` | `/api/cases/{id}/evidence` | Normalized evidence, digest and analysis |
 
 ## PostgreSQL / containers
 
@@ -63,18 +126,30 @@ See [methodology](docs/METHODOLOGY.md), [API/import format](docs/IMPORT.md), and
 docker compose up --build
 ```
 
-This runs PostgreSQL, the API and the dashboard. The database is on the internal Compose network; the UI and API bind to localhost. Compose supplies development-only database credentials. For a separately managed database, set `DATABASE_URL=postgresql+psycopg://user:password@host/database` before starting the API. Docker configuration is supplied; local validation used SQLite, not Docker/PostgreSQL.
+Runs PostgreSQL, the API and the dashboard. Set `DATABASE_URL=postgresql+psycopg://user:password@host/database` for a separately managed database.
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GOLDRUSH_API_KEY` | For live investigation | GoldRush (Covalent) API key |
+| `DATABASE_URL` | No | PostgreSQL connection string; defaults to SQLite |
+
+Never commit `backend/.env` to Git — it is excluded by `.gitignore`.
 
 ## Scope and operating boundaries
 
-This is a **local, single-investigator prototype**. It has no authentication, multi-user isolation or production deployment hardening. Keep it on localhost. Do not expose it as a public service.
+This is a **local, single-investigator prototype**. It has no authentication, multi-user isolation, or production deployment hardening. Keep it on localhost. Do not expose it as a public service.
 
-Live RPC/explorer adapters, a real verified label dataset, cross-chain linkage, token swaps, calibration against labelled outcomes, production migrations, authentication and PDF export are future milestones. Imported labels retain their asserted source and confidence; the application does not certify them. No freezing/disclosure messages are sent.
+Attribution scores are uncalibrated evidence scores, not ownership probabilities. No real-world owner is identified. VASP labels are sourced assertions — the application does not independently verify them. No freezing or disclosure requests are generated.
 
-The source evidence SHA-256 digest permits content comparison; it is not a signature, immutable audit log, or proof that supplied transactions happened on-chain. SQLite files and local evidence are excluded from Git.
+The SHA-256 evidence digest permits content comparison; it is not a signature, immutable audit log, or proof that supplied transactions happened on-chain. SQLite files and `.env` are excluded from Git.
+
+See [methodology](docs/METHODOLOGY.md) for the full model description and limitations.
 
 ## Framework references
 
-- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation)
-- [React Flow quick start](https://reactflow.dev/learn)
-- [FastAPI SQL databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
+- [Next.js](https://nextjs.org/docs/app/getting-started/installation)
+- [React Flow](https://reactflow.dev/learn)
+- [FastAPI](https://fastapi.tiangolo.com/tutorial/sql-databases/)
+- [GoldRush API](https://goldrush.dev/docs/)
