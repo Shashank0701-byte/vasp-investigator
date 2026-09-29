@@ -1,0 +1,16 @@
+{
+  "target": "0x0000000000000000000000000000000000000001",
+  "chain": "ethereum",
+  "mode": "import",
+  "title": "Documentation fixture — not on-chain evidence",
+  "max_hops": 4,
+  "transactions": [{
+    "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "chain": "ethereum", "block_number": 1, "timestamp": "2026-01-01T00:00:00Z",
+    "from_address": "0x0000000000000000000000000000000000000001",
+    "to_address": "0x0000000000000000000000000000000000000002",
+    "asset": "ETH", "amount": "1.25", "usd_value": null,
+    "source": "Documentation fixture, not on-chain evidence", "source_confidence": 0
+  }],
+  "labels": []
+}

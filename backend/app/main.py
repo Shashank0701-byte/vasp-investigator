@@ -1,0 +1,104 @@
+import json
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from hashlib import sha256
+from uuid import uuid4
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
+
+from .engine import TraceBudgetExceeded, analyze
+from .models import InvestigationRequest
+from .providers import DEMO_TARGET, SyntheticProvider
+from .report import report
+from .storage import CaseStore
+
+
+@asynccontextmanager
+async def lifespan(app):
+    app.state.store = CaseStore()
+    yield
+    app.state.store.engine.dispose()
+
+
+app = FastAPI(title="VASP Investigator", version="0.1.0", lifespan=lifespan)
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "version": "0.1.0", "live_ingestion": False}
+
+
+@app.get("/api/demo")
+def demo():
+    return {"target": DEMO_TARGET, "chains": ["ethereum", "bnb"]}
+
+
+@app.get("/api/cases")
+def list_cases():
+    return app.state.store.list()
+
+
+@app.post("/api/cases", status_code=201)
+def create_case(request: InvestigationRequest):
+    if request.mode == "demo":
+        try:
+            txs, labels = SyntheticProvider().fetch(request.target, request.chain)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+    else:
+        txs, labels = request.transactions, request.labels
+    evidence = {
+        "transactions": [t.model_dump(mode="json") for t in txs],
+        "labels": [label.model_dump(mode="json") for label in labels],
+    }
+    digest = sha256(
+        json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    try:
+        analysis = analyze(request, txs, labels)
+    except TraceBudgetExceeded as exc:
+        raise HTTPException(422, str(exc))
+    case = {
+        "id": "CASE-" + uuid4().hex[:12].upper(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "title": request.title,
+        "evidence_digest": digest,
+        "evidence": evidence,
+        "analysis": analysis,
+    }
+    app.state.store.save(case)
+    return case
+
+
+def require_case(case_id):
+    case = app.state.store.get(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+    return case
+
+
+@app.get("/api/cases/{case_id}")
+def get_case(case_id: str):
+    return require_case(case_id)
+
+
+@app.get("/api/cases/{case_id}/report", response_class=PlainTextResponse)
+def get_report(case_id: str):
+    case = require_case(case_id)
+    return PlainTextResponse(
+        report(case),
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{case["id"]}.md"'},
+    )
+
+
+@app.get("/api/cases/{case_id}/evidence")
+def get_evidence(case_id: str):
+    case = require_case(case_id)
+    return {
+        "case_id": case["id"],
+        "sha256": case["evidence_digest"],
+        "evidence": case["evidence"],
+        "analysis": case["analysis"],
+    }
