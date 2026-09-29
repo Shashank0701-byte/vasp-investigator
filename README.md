@@ -2,16 +2,63 @@
 
 A runnable SIH 2026 prototype for explainable attribution of cryptocurrency fund flows to labelled service endpoints. It identifies **evidence-supported VASP candidates**, not people or wallet ownership.
 
-## Run locally
+## Installation
 
-Requires Node.js 20.9+ and Python 3.9+ (3.12 recommended).
+### Prerequisites
+
+- Python 3.9+ (3.12 recommended)
+- Node.js 20.9+
+- A free [GoldRush API key](https://goldrush.dev) for live investigations
+
+### 1. Clone the repository
 
 ```sh
-./scripts/setup.sh
-./scripts/dev.sh
+git clone https://github.com/your-org/vasp-investigator.git
+cd vasp-investigator
 ```
 
-Open http://127.0.0.1:3000. API documentation: http://127.0.0.1:8000/docs.
+### 2. Set up environment variables
+
+```sh
+cp backend/.env.example backend/.env
+```
+
+Open `backend/.env` and fill in your GoldRush API key:
+
+```env
+GOLDRUSH_API_KEY=your_key_here
+```
+
+The demo and import modes work without any API key. Only live investigation (`POST /api/investigate`) requires one.
+
+### 3. Install dependencies and start
+
+```sh
+./scripts/setup.sh   # creates backend/.venv and installs Python + Node deps
+./scripts/dev.sh     # starts API on :8000 and dashboard on :3000
+```
+
+On Windows, run the equivalent commands manually:
+
+```sh
+# Backend
+python -m venv backend/.venv
+backend\.venv\Scripts\pip install -r backend/requirements.lock
+
+# Frontend
+cd frontend && npm ci && cd ..
+
+# Start API
+cd backend && .venv\Scripts\uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# Start dashboard (in a second terminal)
+cd frontend && npm run dev
+```
+
+### 4. Open the app
+
+- Dashboard: http://127.0.0.1:3000
+- API docs: http://127.0.0.1:8000/docs
 
 ### Live investigation
 
